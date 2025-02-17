@@ -1,5 +1,9 @@
 "use client"
 
+import * as React from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -17,21 +21,20 @@ import {
   BookUser, 
   BookOpenText 
 } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
 
-export function UserProfileDropdown({ 
-  user 
-}: { 
+interface UserProfileDropdownProps { 
   user?: { 
     name?: string | null, 
     email?: string | null, 
     image?: string | null 
   } 
-}) {
+}
+
+export function UserProfileDropdown({ 
+  user 
+}: UserProfileDropdownProps) {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = React.useState(false)
 
   const handleLogout = async () => {
     try {
