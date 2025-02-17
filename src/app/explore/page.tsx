@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Skeleton, SkeletonGrid } from '@/components/ui/skeleton'
+import { AddToListDialog } from '@/components/ui/add-to-list-dialog'
 import { 
   DropdownMenu, 
   DropdownMenuContent, 

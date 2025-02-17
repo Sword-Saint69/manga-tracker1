@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Skeleton, SkeletonGrid } from '@/components/ui/skeleton'
+import { AddToListDialog } from '@/components/ui/add-to-list-dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -186,6 +187,25 @@ export default function Dashboard() {
     }
   }
 
+  const handleAddToList = async (manga: any, status: string, progress: number) => {
+    try {
+      // TODO: Implement actual backend call to add manga to user's list
+      console.log('Adding manga to list:', {
+        mangaId: manga.id,
+        title: manga.displayTitle,
+        status,
+        progress
+      })
+      
+      // Optional: Show a toast or notification
+      alert(`Added ${manga.displayTitle} to ${status} list`)
+    } catch (error) {
+      console.error('Error adding manga to list:', error)
+      // Optional: Show error toast
+      alert('Failed to add manga to list')
+    }
+  }
+
   const MangaGrid = ({ manga, title, isSearchResult = false }: { 
     manga: any[], 
     title: string, 
@@ -250,9 +270,16 @@ export default function Dashboard() {
                     <Badge variant="secondary" className="text-xs">
                       {manga.status === 'RELEASING' ? 'Ongoing' : manga.status}
                     </Badge>
-                    <Button variant="ghost" size="sm" className="text-xs hover:bg-transparent">
-                      {isSearchResult ? 'Add to List' : 'View'}
-                    </Button>
+                    {isSearchResult ? (
+                      <AddToListDialog 
+                        manga={manga} 
+                        onAddToList={(status, progress) => handleAddToList(manga, status, progress)}
+                      />
+                    ) : (
+                      <Button variant="ghost" size="sm" className="text-xs hover:bg-transparent">
+                        View
+                      </Button>
+                    )}
                   </div>
                 </CardFooter>
               </Card>
