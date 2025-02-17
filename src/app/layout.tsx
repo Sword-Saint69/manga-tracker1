@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { UserProfileDropdown } from "@/components/ui/user-profile-dropdown";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,12 +23,75 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // TODO: Replace with actual user data from authentication
+  const user = {
+    name: "John Doe",
+    email: "john.doe@example.com",
+    image: "/default-avatar.png",
+  };
+
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background`}
       >
-        {children}
+        <div className="flex flex-col min-h-screen">
+          <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
+              <div className="flex items-center">
+                <Link href="/" className="flex items-center space-x-2">
+                  <Image
+                    src="/logo.png"
+                    alt="Manga Tracker Logo"
+                    width={40}
+                    height={40}
+                  />
+                  <span className="hidden font-bold sm:inline-block">
+                    Manga Tracker
+                  </span>
+                </Link>
+                <nav className="ml-4 flex items-center space-x-4">
+                  <Link
+                    href="/dashboard"
+                    className="text-sm font-medium transition-colors hover:text-primary"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/explore"
+                    className="text-sm font-medium transition-colors hover:text-primary"
+                  >
+                    Explore
+                  </Link>
+                  <Link
+                    href="/library"
+                    className="text-sm font-medium transition-colors hover:text-primary"
+                  >
+                    Library
+                  </Link>
+                </nav>
+              </div>
+
+              {/* Add User Profile Dropdown */}
+              <div className="flex items-center space-x-4">
+                <UserProfileDropdown user={user} />
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-grow">
+            {children}
+          </main>
+
+          <footer className="border-t py-6">
+            <div className="container flex flex-col items-center justify-between space-y-4 md:h-24 md:flex-row">
+              <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
+                &copy; {new Date().getFullYear()} Manga Tracker. All rights
+                reserved.
+              </p>
+            </div>
+          </footer>
+        </div>
       </body>
     </html>
   );
