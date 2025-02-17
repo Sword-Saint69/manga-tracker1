@@ -53,14 +53,17 @@ const MANGA_QUERIES = gql`
 const getKitsuImageUrl = async (title: string) => {
   try {
     const response = await fetch(
-      `https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(title)}&page[limit]=1`
+      `https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(title)}&page[limit]=1}`,
+      { 
+        signal: AbortSignal.timeout(3000) // 3 second timeout
+      }
     )
     if (!response.ok) return null
     
     const data = await response.json()
     return data.data[0]?.attributes?.posterImage?.original || null
   } catch (error) {
-    console.error('Error fetching Kitsu image:', error)
+    console.warn('Error fetching Kitsu image:', error)
     return null
   }
 }
@@ -81,7 +84,7 @@ async function getMangaData() {
           return {
             ...manga,
             displayTitle: manga.title.english || manga.title.romaji,
-            coverImage: kitsuImage || manga.coverImage.large,
+            coverImage: kitsuImage || manga.coverImage.large || '/default-manga-cover.jpg',
           }
         })
       )

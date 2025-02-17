@@ -9,7 +9,6 @@ const trendingManga = [
   {
     id: 1,
     title: 'Sakamoto Days',
-    cover: '/manga/sakamoto-days.jpg',
     description: 'Taro Sakamoto was the ultimate assassin, feared b...',
     genres: ['Action', 'Comedy'],
     status: 'Ongoing',
@@ -18,7 +17,6 @@ const trendingManga = [
   {
     id: 2,
     title: 'Kagurabachi',
-    cover: '/manga/kagurabachi.jpg',
     description: 'Young Chinese swordsmith is a...',
     genres: ['Action', 'Drama'],
     status: 'Ongoing',
@@ -27,7 +25,6 @@ const trendingManga = [
   {
     id: 3,
     title: 'Blue Box',
-    cover: '/manga/blue-box.jpg',
     description: 'Taiki Inomata is on the boys badminton team at sports...',
     genres: ['Romance', 'Slice of Life'],
     status: 'Ongoing',
@@ -36,7 +33,6 @@ const trendingManga = [
   {
     id: 4,
     title: 'SPY × FAMILY',
-    cover: '/manga/spy-family.jpg',
     description: 'The master spy codenamed "Twilight" has spent...',
     genres: ['Action', 'Comedy', 'Slice of Life'],
     status: 'Ongoing',
@@ -45,7 +41,6 @@ const trendingManga = [
   {
     id: 5,
     title: 'Ichi the Witch',
-    cover: '/manga/ichi-witch.jpg',
     description: 'In this world, witches must hunt down their cursed De...',
     genres: ['Fantasy'],
     status: 'Ongoing',
@@ -97,7 +92,7 @@ export default function Home() {
                     </Badge>
                   </div>
                   <Image
-                    src={manga.cover}
+                    src={manga.cover || "/default-cover.jpg"}
                     alt={manga.title}
                     fill
                     className="object-cover"

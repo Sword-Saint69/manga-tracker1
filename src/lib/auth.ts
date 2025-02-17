@@ -1,12 +1,12 @@
-import NextAuth from 'next-auth'
+import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter'
-import bcrypt from 'bcrypt'
 import mongoose from 'mongoose'
+import bcrypt from 'bcrypt'
 import connectDB from '@/lib/mongodb'
 import User from '@/models/User'
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(
     // Wrap the connection in a way that returns a MongoClient-like object
     (async () => {
@@ -66,17 +66,27 @@ const handler = NextAuth({
   },
   callbacks: {
     async session({ session, token }) {
-      session.user.id = token.id
+      if (token.id) {
+        session.user.id = token.id as string
+      }
+      if (token.avatar) {
+        session.user.image = token.avatar as string
+      }
       return session
     },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+        
+        // Fetch user to get latest avatar
+        await connectDB()
+        const dbUser = await User.findById(user.id)
+        if (dbUser) {
+          token.avatar = dbUser.avatar || '/default-avatar.png'
+        }
       }
       return token
     }
   },
   secret: process.env.NEXTAUTH_SECRET
-})
-
-export { handler as GET, handler as POST }
+}

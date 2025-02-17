@@ -4,22 +4,48 @@ const UserSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Please provide a name'],
-    maxlength: [60, 'Name cannot be more than 60 characters']
+    trim: true,
+    maxlength: [50, 'Name cannot be more than 50 characters']
   },
   email: {
     type: String,
     required: [true, 'Please provide an email'],
     unique: true,
-    match: [
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-      'Please provide a valid email'
-    ]
+    trim: true,
+    lowercase: true,
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
   },
   password: {
     type: String,
     required: [true, 'Please provide a password'],
     minlength: [6, 'Password must be at least 6 characters'],
-    select: false
+    select: false  // Prevents password from being returned in queries
+  },
+  avatar: {
+    type: String,
+    default: '/default-avatar.png'
+  },
+  bio: {
+    type: String,
+    maxlength: [500, 'Bio cannot be more than 500 characters'],
+    default: ''
+  },
+  readingGoal: {
+    type: Number,
+    default: 50,
+    min: [0, 'Reading goal cannot be negative']
+  },
+  readingStats: {
+    totalRead: {
+      type: Number,
+      default: 0,
+      min: [0, 'Total read cannot be negative']
+    },
+    completed: {
+      type: Number,
+      default: 0,
+      min: [0, 'Completed manga count cannot be negative']
+    }
   },
   mangaList: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -29,6 +55,11 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 })
 
+// Prevent re-compilation of the model
 export default mongoose.models.User || mongoose.model('User', UserSchema)
