@@ -202,7 +202,7 @@ export default function Explore() {
         addedAt: new Date().toISOString()
       }
 
-      // Simulate adding to library (replace with actual backend call)
+      // Adding to library with more robust error handling
       const response = await fetch('/api/library/add', {
         method: 'POST',
         headers: {
@@ -211,18 +211,28 @@ export default function Explore() {
         body: JSON.stringify(mangaToAdd)
       })
 
+      const responseData = await response.json()
+
       if (!response.ok) {
-        throw new Error('Failed to add manga to library')
+        // Throw an error with the specific error message from the backend
+        throw new Error(responseData.error || 'Failed to add manga to library')
       }
 
-      // Show success notification
-      alert(`Added ${mangaToAdd.title} to ${status} list`)
+      // Success notification (replace with a proper toast system later)
+      alert(`Successfully added ${mangaToAdd.title} to ${status} list`)
 
-      // Optional: Trigger a refetch or update of library data
-      // You might want to implement this based on your state management
+      // Optional: Update local state or trigger a refetch of library data
+      // This would depend on your state management approach
+      return responseData.manga
     } catch (error) {
+      // More detailed error logging
       console.error('Error adding manga to library:', error)
-      alert('Failed to add manga to library')
+      
+      // User-friendly error notification
+      alert(error instanceof Error ? error.message : 'An unexpected error occurred')
+      
+      // Optionally rethrow to allow caller to handle the error
+      throw error
     }
   }
 

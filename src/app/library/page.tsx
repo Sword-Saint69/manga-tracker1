@@ -141,6 +141,34 @@ async function getUserMangaList() {
   }
 }
 
+// Function to get user's manga list from cookies
+async function getCookieMangaList() {
+  try {
+    const response = await fetch('/api/library/add')
+    const data = await response.json()
+
+    // Process manga lists from cookies
+    const processLibraryList = (status: string) => 
+      data.manga.filter((manga: any) => 
+        manga.status.toLowerCase() === status.toLowerCase()
+      ).map((manga: any) => ({
+        ...manga,
+        displayTitle: manga.title,
+        coverImage: manga.coverImage,
+      }))
+
+    return {
+      reading: processLibraryList('CURRENT'),
+      completed: processLibraryList('COMPLETED'),
+      planToRead: processLibraryList('PLANNING'),
+      dropped: processLibraryList('DROPPED')
+    }
+  } catch (error) {
+    console.error('Error fetching cookie-based manga list:', error)
+    return { reading: [], completed: [], planToRead: [], dropped: [] }
+  }
+}
+
 export default function Library() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -162,8 +190,36 @@ export default function Library() {
   // Fetch data when component mounts
   useEffect(() => {
     async function fetchMangaData() {
-      const data = await getUserMangaList()
-      setMangaData(data)
+      const [anilistData, cookieData] = await Promise.all([
+        getUserMangaList(),
+        getCookieMangaList()
+      ])
+
+      // Merge AniList and cookie-based data, prioritizing cookie data
+      const mergedData = {
+        reading: [...cookieData.reading, ...anilistData.reading],
+        completed: [...cookieData.completed, ...anilistData.completed],
+        planToRead: [...cookieData.planToRead, ...anilistData.planToRead],
+        dropped: [...cookieData.dropped, ...anilistData.dropped]
+      }
+
+      // Remove duplicates
+      const uniqueData = {
+        reading: Array.from(new Set(mergedData.reading.map(m => m.id))).map(id => 
+          mergedData.reading.find(m => m.id === id)!
+        ),
+        completed: Array.from(new Set(mergedData.completed.map(m => m.id))).map(id => 
+          mergedData.completed.find(m => m.id === id)!
+        ),
+        planToRead: Array.from(new Set(mergedData.planToRead.map(m => m.id))).map(id => 
+          mergedData.planToRead.find(m => m.id === id)!
+        ),
+        dropped: Array.from(new Set(mergedData.dropped.map(m => m.id))).map(id => 
+          mergedData.dropped.find(m => m.id === id)!
+        )
+      }
+
+      setMangaData(uniqueData)
     }
     fetchMangaData()
   }, [])
