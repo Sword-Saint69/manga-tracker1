@@ -187,22 +187,42 @@ export default function Dashboard() {
     }
   }
 
-  const handleAddToList = async (manga: any, status: string, progress: number) => {
+  const handleAddToList = async (manga: any, status: string) => {
     try {
-      // TODO: Implement actual backend call to add manga to user's list
-      console.log('Adding manga to list:', {
-        mangaId: manga.id,
-        title: manga.displayTitle,
-        status,
-        progress
+      // Prepare manga data for library
+      const mangaToAdd = {
+        id: manga.id,
+        title: manga.displayTitle || manga.title?.romaji || manga.title?.english,
+        coverImage: manga.coverImage,
+        status: status,
+        progress: 0, // Default progress
+        totalChapters: manga.chapters || null,
+        averageScore: manga.averageScore,
+        genres: manga.genres,
+        addedAt: new Date().toISOString()
+      }
+
+      // Simulate adding to library (replace with actual backend call)
+      const response = await fetch('/api/library/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(mangaToAdd)
       })
-      
-      // Optional: Show a toast or notification
-      alert(`Added ${manga.displayTitle} to ${status} list`)
+
+      if (!response.ok) {
+        throw new Error('Failed to add manga to library')
+      }
+
+      // Show success notification
+      alert(`Added ${mangaToAdd.title} to ${status} list`)
+
+      // Optional: Trigger a refetch or update of library data
+      // You might want to implement this based on your state management
     } catch (error) {
-      console.error('Error adding manga to list:', error)
-      // Optional: Show error toast
-      alert('Failed to add manga to list')
+      console.error('Error adding manga to library:', error)
+      alert('Failed to add manga to library')
     }
   }
 
@@ -270,15 +290,36 @@ export default function Dashboard() {
                     <Badge variant="secondary" className="text-xs">
                       {manga.status === 'RELEASING' ? 'Ongoing' : manga.status}
                     </Badge>
-                    {isSearchResult ? (
+                    {!isSearchResult ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-xs hover:bg-transparent">
+                            Manage List
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onSelect={() => handleAddToList(manga, 'CURRENT')}>
+                            Currently Reading
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleAddToList(manga, 'PLANNING')}>
+                            Plan to Read
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleAddToList(manga, 'COMPLETED')}>
+                            Completed
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleAddToList(manga, 'DROPPED')}>
+                            Dropped
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleAddToList(manga, 'PAUSED')}>
+                            Paused
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
                       <AddToListDialog 
                         manga={manga} 
-                        onAddToList={(status, progress) => handleAddToList(manga, status, progress)}
+                        onAddToList={(status, progress) => handleAddToList(manga, status)}
                       />
-                    ) : (
-                      <Button variant="ghost" size="sm" className="text-xs hover:bg-transparent">
-                        View
-                      </Button>
                     )}
                   </div>
                 </CardFooter>
