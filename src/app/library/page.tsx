@@ -32,6 +32,7 @@ const USER_MANGA_LIST_QUERY = gql`
               large
               medium
             }
+            chapters
           }
         }
       }
@@ -54,6 +55,7 @@ const USER_MANGA_LIST_QUERY = gql`
               large
               medium
             }
+            chapters
           }
         }
       }
@@ -76,6 +78,7 @@ const USER_MANGA_LIST_QUERY = gql`
               large
               medium
             }
+            chapters
           }
         }
       }
@@ -98,6 +101,30 @@ const USER_MANGA_LIST_QUERY = gql`
               large
               medium
             }
+            chapters
+          }
+        }
+      }
+    }
+    paused: MediaListCollection(userId: $userId, type: MANGA, status: PAUSED) {
+      lists {
+        entries {
+          media {
+            id
+            title {
+              romaji
+              english
+              native
+            }
+            description
+            genres
+            status
+            averageScore
+            coverImage {
+              large
+              medium
+            }
+            chapters
           }
         }
       }
@@ -116,7 +143,7 @@ async function getUserMangaList() {
       }
     })
 
-    // Process manga lists
+    // Process manga lists with more flexible mapping
     const processMediaList = (list: any) => 
       list.lists.flatMap(listGroup => 
         listGroup.entries.map(entry => {
@@ -125,6 +152,7 @@ async function getUserMangaList() {
             ...manga,
             displayTitle: manga.title.english || manga.title.romaji,
             coverImage: manga.coverImage.large,
+            chapters: manga.chapters || null
           }
         })
       )
@@ -133,11 +161,18 @@ async function getUserMangaList() {
       reading: processMediaList(data.reading),
       completed: processMediaList(data.completed),
       planToRead: processMediaList(data.planToRead),
-      dropped: processMediaList(data.dropped)
+      dropped: processMediaList(data.dropped),
+      paused: processMediaList(data.paused)
     }
   } catch (error) {
     console.error('Error fetching user\'s manga list:', error)
-    return { reading: [], completed: [], planToRead: [], dropped: [] }
+    return { 
+      reading: [], 
+      completed: [], 
+      planToRead: [], 
+      dropped: [],
+      paused: [] 
+    }
   }
 }
 
@@ -147,10 +182,10 @@ async function getCookieMangaList() {
     const response = await fetch('/api/library/add')
     const data = await response.json()
 
-    // Process manga lists from cookies
+    // Comprehensive status mapping
     const processLibraryList = (status: string) => 
       data.manga.filter((manga: any) => 
-        manga.status.toLowerCase() === status.toLowerCase()
+        manga.status.toUpperCase() === status.toUpperCase()
       ).map((manga: any) => ({
         ...manga,
         displayTitle: manga.title,
@@ -161,11 +196,18 @@ async function getCookieMangaList() {
       reading: processLibraryList('CURRENT'),
       completed: processLibraryList('COMPLETED'),
       planToRead: processLibraryList('PLANNING'),
-      dropped: processLibraryList('DROPPED')
+      dropped: processLibraryList('DROPPED'),
+      paused: processLibraryList('PAUSED')
     }
   } catch (error) {
     console.error('Error fetching cookie-based manga list:', error)
-    return { reading: [], completed: [], planToRead: [], dropped: [] }
+    return { 
+      reading: [], 
+      completed: [], 
+      planToRead: [], 
+      dropped: [],
+      paused: [] 
+    }
   }
 }
 
@@ -181,7 +223,8 @@ export default function Library() {
     reading: [],
     completed: [],
     planToRead: [],
-    dropped: []
+    dropped: [],
+    paused: []
   })
 
   // Search state
@@ -200,22 +243,26 @@ export default function Library() {
         reading: [...cookieData.reading, ...anilistData.reading],
         completed: [...cookieData.completed, ...anilistData.completed],
         planToRead: [...cookieData.planToRead, ...anilistData.planToRead],
-        dropped: [...cookieData.dropped, ...anilistData.dropped]
+        dropped: [...cookieData.dropped, ...anilistData.dropped],
+        paused: [...cookieData.paused, ...anilistData.paused]
       }
 
-      // Remove duplicates
+      // Remove duplicates with more robust deduplication
       const uniqueData = {
-        reading: Array.from(new Set(mergedData.reading.map(m => m.id))).map(id => 
-          mergedData.reading.find(m => m.id === id)!
+        reading: Array.from(
+          new Map(mergedData.reading.map(m => [m.id, m])).values()
         ),
-        completed: Array.from(new Set(mergedData.completed.map(m => m.id))).map(id => 
-          mergedData.completed.find(m => m.id === id)!
+        completed: Array.from(
+          new Map(mergedData.completed.map(m => [m.id, m])).values()
         ),
-        planToRead: Array.from(new Set(mergedData.planToRead.map(m => m.id))).map(id => 
-          mergedData.planToRead.find(m => m.id === id)!
+        planToRead: Array.from(
+          new Map(mergedData.planToRead.map(m => [m.id, m])).values()
         ),
-        dropped: Array.from(new Set(mergedData.dropped.map(m => m.id))).map(id => 
-          mergedData.dropped.find(m => m.id === id)!
+        dropped: Array.from(
+          new Map(mergedData.dropped.map(m => [m.id, m])).values()
+        ),
+        paused: Array.from(
+          new Map(mergedData.paused.map(m => [m.id, m])).values()
         )
       }
 
@@ -224,7 +271,7 @@ export default function Library() {
     fetchMangaData()
   }, [])
 
-  const { reading, completed, planToRead, dropped } = mangaData
+  const { reading, completed, planToRead, dropped, paused } = mangaData
 
   // Filter function for search
   const filterManga = (manga: any[]) => {
@@ -363,6 +410,12 @@ export default function Library() {
         >
           Dropped
         </button>
+        <button 
+          className={`px-4 py-2 ${activeSection === 'paused' ? 'border-b-2 border-primary' : 'text-muted-foreground'}`}
+          onClick={() => router.push('/library?section=paused')}
+        >
+          Paused
+        </button>
       </div>
 
       {/* Manga Sections */}
@@ -385,6 +438,11 @@ export default function Library() {
         manga={dropped} 
         emptyMessage="Manga you've decided to stop reading" 
         isActive={activeSection === 'dropped'}
+      />
+      <MangaGrid 
+        manga={paused} 
+        emptyMessage="Manga you've paused reading" 
+        isActive={activeSection === 'paused'}
       />
     </div>
   )
