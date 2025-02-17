@@ -1,5 +1,7 @@
+'use client'
+
 import { ReactNode } from 'react'
-import { motion } from 'framer-motion'
+import { motion, MotionProps } from 'framer-motion'
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (

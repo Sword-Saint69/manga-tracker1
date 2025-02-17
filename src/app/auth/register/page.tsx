@@ -1,114 +1,183 @@
-'use client'
+"use client"
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { ArrowRight, Mail, Lock, User } from 'lucide-react'
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from 'next/link'
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle, 
+  CardFooter 
+} from "@/components/ui/card"
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form"
+import { ThemeToggle } from "@/components/theme-toggle"
+
+// Zod validation schema
+const formSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Invalid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" })
+})
 
 export default function RegisterPage() {
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!")
-      return
+  // Define the form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: ""
     }
+  })
 
-    // TODO: Implement registration logic
-    console.log('Registration attempt', { username, email, password })
+  // Form submission handler
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setError(null)
+
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed')
+      }
+
+      // Redirect to login page
+      router.push('/auth/login')
+    } catch (err: any) {
+      setError(err.message)
+    }
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Create Your Manga Tracker Account</CardTitle>
-        <CardDescription>Start tracking your favorite manga today!</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Input 
-              type="text" 
-              placeholder="Username" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Input 
-              type="email" 
-              placeholder="Email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Input 
-              type="password" 
-              placeholder="Password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Input 
-              type="password" 
-              placeholder="Confirm Password" 
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <Button type="submit" className="w-full">Register</Button>
-          </motion.div>
-        </form>
+    <div className="min-h-screen flex items-center justify-center bg-[#fffff] dark:bg-background">
+      <ThemeToggle />
+      <Card className="w-full max-w-md shadow-lg dark:shadow-primary/10">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-3xl font-bold">Create an account</CardTitle>
+          <CardDescription>
+            Join us to start tracking your favorite manga series
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {error && (
+                <div className="bg-destructive/15 text-destructive p-3 rounded-lg text-sm text-center">
+                  {error}
+                </div>
+              )}
+              
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="sr-only">Full Name</FormLabel>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <FormControl>
+                        <Input 
+                          placeholder="Full Name" 
+                          {...field} 
+                          className="pl-9"
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="sr-only">Email</FormLabel>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <FormControl>
+                        <Input 
+                          placeholder="Email" 
+                          {...field} 
+                          className="pl-9"
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="sr-only">Password</FormLabel>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Password" 
+                          {...field} 
+                          className="pl-9"
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? 'Creating account...' : 'Create account'}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
         
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-center mt-4"
-        >
-          <Link href="/auth/login" className="text-sm text-blue-600 hover:underline">
-            Already have an account? Login
-          </Link>
-        </motion.div>
-      </CardContent>
-    </Card>
+        <CardFooter className="justify-center">
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{' '}
+            <Link 
+              href="/auth/login" 
+              className="text-primary hover:underline font-medium"
+            >
+              Sign in
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }
